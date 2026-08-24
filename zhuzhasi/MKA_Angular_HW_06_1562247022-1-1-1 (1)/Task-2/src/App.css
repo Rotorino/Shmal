@@ -1,0 +1,72 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  flex: 1;
+  width: 100%;
+}
+
+.header {
+  background: #1e1e1e;
+  padding: 24px 20px;
+  text-align: center;
+  border-bottom: 1px solid #333;
+}
+
+.header h1 {
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.footer {
+  background: #1e1e1e;
+  padding: 16px;
+  text-align: center;
+  border-top: 1px solid #333;
+  font-size: 13px;
+  color: #666;
+}
+
+.profile-card {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 24px;
+  display: flex;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.reset-btn {
+  background: #cf6679;
+  color: #121212;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 16px;
+  width: 100%;
+}
+
+.reset-btn:hover {
+  background: #e57373;
+}
+
+@media (max-width: 600px) {
+  .profile-card {
+    flex-direction: column;
+  }
+}

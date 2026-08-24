@@ -1,0 +1,398 @@
+<?php
+$error = '';
+$style = '';
+
+function getComponent(string $value): ?int
+{
+    if (!is_numeric($value)) {
+        return null;
+    }
+    $v = (int)$value;
+    return ($v >= 0 && $v <= 255) ? $v : null;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $r = getComponent($_POST['r'] ?? '');
+    $g = getComponent($_POST['g'] ?? '');
+    $b = getComponent($_POST['b'] ?? '');
+
+    if ($r === null || $g === null || $b === null) {
+        $error = 'Ошибка: все три поля должны содержать числа от 0 до 255!';
+    } else {
+        $bg = sprintf('#%02x%02x%02x', $r, $g, $b);
+        $txt = sprintf('#%02x%02x%02x', 255 - $r, 255 - $g, 255 - $b);
+
+        $style = "background-color: {$bg}; color: {$txt};";
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Задание 1 — RGB цвет</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #result {
+            display: inline-block;
+            padding: 30px;
+            font-size: 22px;
+            font-weight: bold;
+            transition: all .3s;
+        }
+        .error { color: red; }
+        input, button { padding: 8px; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+    <h3>Введите компоненты цвета (0–255)</h3>
+
+    <form method="POST">
+        <input type="number" name="r" min="0" max="255" placeholder="R"
+               value="<?= htmlspecialchars($_POST['r'] ?? '') ?>" required>
+        <input type="number" name="g" min="0" max="255" placeholder="G"
+               value="<?= htmlspecialchars($_POST['g'] ?? '') ?>" required>
+        <input type="number" name="b" min="0" max="255" placeholder="B"
+               value="<?= htmlspecialchars($_POST['b'] ?? '') ?>" required>
+        <button type="submit">Accept</button>
+    </form>
+
+    <?php if ($error !== ''): ?>
+        <p class="error"><?= $error ?></p>
+    <?php endif; ?>
+
+    <p>
+        <span id="result" style="<?= $style ?>">
+            Про цвета слышал? И я нет...
+        </span>
+    </p>
+
+</body>
+</html>
+
+
+//------------------------------------------------------------------------------------
+
+<?php
+
+
+function processPrices(array $prices, float $maxPrice, float $discount): array
+{
+    $result = [];
+
+    foreach ($prices as $price) {
+        if ($price > $maxPrice) {
+            continue; // пропускаем всё, что СТРОГО выше лимита
+        }
+        $result[] = round($price * (1 - $discount / 100), 2);
+    }
+
+    return $result;
+}
+
+
+function analyzeWeather(array $temperatures): array
+{
+    return [
+        'avg'         => round(array_sum($temperatures) / count($temperatures), 1),
+        'max'         => max($temperatures),
+        'min'         => min($temperatures),
+        'frosty_days' => count(array_filter($temperatures, fn($t) => $t < 0)),
+    ];
+}
+
+$prices = [100.50, 2500, 300, 6000, 999.99];
+print_r(processPrices($prices, 1000, 15));
+
+$weather = [5, -3, 0, 12, -7, 4];
+print_r(analyzeWeather($weather));
+
+//------------------------------------------------------------------------------------
+
+<?php
+
+
+function validatePassword(string $password): bool
+{
+    if (mb_strlen($password) < 8) {
+        return false;
+    }
+    if (!preg_match('/\d/', $password)) {          // хотя бы одна цифра
+        return false;
+    }
+    if (!preg_match('/[A-ZА-ЯЁ]/u', $password)) {  // хотя бы одна заглавная
+        return false;
+    }
+    return true;
+}
+
+
+function generateSlug(string $title): string
+{
+    $map = [
+        'а'=>'a','б'=>'b','в'=>'v','г'=>'g','д'=>'d','е'=>'e','ё'=>'e',
+        'ж'=>'zh','з'=>'z','и'=>'i','й'=>'y','к'=>'k','л'=>'l','м'=>'m',
+        'н'=>'n','о'=>'o','п'=>'p','р'=>'r','с'=>'s','т'=>'t','у'=>'u',
+        'ф'=>'f','х'=>'h','ц'=>'ts','ч'=>'ch','ш'=>'sh','щ'=>'sch',
+        'ъ'=>'','ы'=>'y','ь'=>'','э'=>'e','ю'=>'yu','я'=>'ya',
+        ' '=>'-',
+    ];
+
+    $slug = mb_strtolower(trim($title));       // 1. нижний регистр (кириллица!)
+    $slug = strtr($slug, $map);                // 2. транслит + пробелы -> '-'
+    $slug = preg_replace('/[^a-z0-9\-]/', '', $slug); // 3. убрать пунктуацию
+    $slug = preg_replace('/-+/', '-', $slug);  // 4. схлопнуть двойные дефисы
+    $slug = trim($slug, '-');                  // 5. убрать '-' по краям
+
+    return $slug;
+}
+
+var_dump(validatePassword('qwerty'));            // false — мало символов
+var_dump(validatePassword('Password1'));         // true
+var_dump(validatePassword('password123'));       // false — нет заглавной
+
+echo generateSlug('Привет, Мир! Как дела?');     // privet-mir-kak-dela
+echo PHP_EOL;
+echo generateSlug('Ёжик и ЖУК #5');              // ezhik-i-zhuk-5
+
+
+//-----------------------------------------------------------------------------
+
+<?php
+
+class Wallet
+{
+    private string $currency;   // скрытые свойства — напрямую снаружи не изменить
+    private float $balance;
+
+    public function __construct(string $currency, float $balance = 0)
+    {
+        $this->currency = $currency;
+        $this->balance  = $balance;
+    }
+
+    public function getBalance(): float
+    {
+        return $this->balance;
+    }
+
+    public function getCurrency(): string
+    {
+        return $this->currency;
+    }
+
+    public function deposit(float $amount): void
+    {
+        $this->balance += $amount;
+    }
+
+    public function withdraw(float $amount): void
+    {
+        if ($amount > $this->balance) {
+            echo "Недостаточно средств!" . PHP_EOL;
+            return; // баланс не трогаем
+        }
+        $this->balance -= $amount;
+    }
+}
+
+$wallet = new Wallet('RUB');          // баланс по умолчанию 0
+echo $wallet->getBalance() . PHP_EOL; // 0
+
+$wallet->deposit(1500);
+echo $wallet->getBalance() . PHP_EOL; // 1500
+
+$wallet->withdraw(2000);              // Недостаточно средств!
+echo $wallet->getBalance() . PHP_EOL; // всё ещё 1500
+
+$wallet->withdraw(500);
+echo $wallet->getBalance() . PHP_EOL; // 1000
+
+// echo $wallet->balance; // Fatal error - свойство private
+
+//-----------------------------------------------------------------------------
+
+<?php
+
+trait LoggerTrait
+{
+    public function log(string $message): void
+    {
+        echo '[' . date('Y-m-d H:i:s') . '] ' . $message . PHP_EOL;
+    }
+}
+
+trait TimestampTrait
+{
+    protected ?DateTimeImmutable $createdAt = null;
+
+    abstract public function getTitle(): string;
+
+    public function getInfo(): string
+    {
+        $this->createdAt ??= new DateTimeImmutable(); // запоминаем дату при первом вызове
+        return 'Объект: ' . $this->getTitle()
+             . ', создан: ' . $this->createdAt->format('d.m.Y H:i:s');
+    }
+}
+
+class User
+{
+    use LoggerTrait;
+    use TimestampTrait;
+
+    private string $name;
+
+    public function __construct(string $name)
+    {
+        $this->name = $name;
+    }
+
+    public function getTitle(): string
+    {
+        return $this->name;
+    }
+}
+
+class Product
+{
+    use LoggerTrait;
+    use TimestampTrait;
+
+    private string $title;
+
+    public function __construct(string $title)
+    {
+        $this->title = $title;
+    }
+
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+}
+
+// Проверка работы 
+$user    = new User('Иван Петров');
+$product = new Product('Ноутбук ASUS');
+
+echo $user->getInfo() . PHP_EOL;      // Объект: Иван Петров, создан: 24.08.2026 ...
+echo $product->getInfo() . PHP_EOL;   // Объект: Ноутбук ASUS, создан: ...
+
+$user->log('Пользователь вошёл в систему');   // [2026-08-24 14:03:11] Пользователь...
+$product->log('Товар добавлен на склад');
+
+//-----------------------------------------------------------------------------
+
+<?php
+
+//  Интерфейсы 
+{
+    public function calculateDeliveryCost(): float;
+}
+
+interface WarrantyInterface
+{
+    public function getWarrantyPeriod(): int;
+}
+
+//  Абстрактный родитель 
+abstract class Product
+{
+    protected string $title;
+    protected float $price;
+
+    public function __construct(string $title, float $price)
+    {
+        $this->title = $title;
+        $this->price = $price;
+    }
+
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+
+    public function getPrice(): float
+    {
+        return $this->price;
+    }
+
+    // Каждый наследник считает финальную цену по-своему
+    abstract public function getFinalPrice(): float;
+}
+
+//  Наследники 
+class DigitalProduct extends Product
+{
+    public function getFinalPrice(): float
+    {
+        return $this->price * 0.9; // скидка 10%
+    }
+}
+
+class PhysicalProduct extends Product implements DeliverableInterface
+{
+    public function calculateDeliveryCost(): float
+    {
+        return $this->price > 5000 ? 0 : 300; // дороже 5000 — доставка бесплатна
+    }
+
+    public function getFinalPrice(): float
+    {
+        return $this->price;
+    }
+}
+
+class ElectronicsProduct extends Product implements DeliverableInterface, WarrantyInterface
+{
+    private int $weight;
+
+    public function __construct(string $title, float $price, int $weight)
+    {
+        parent::__construct($title, $price); // базовые свойства инициализирует родитель
+        $this->weight = $weight;
+    }
+
+    public function calculateDeliveryCost(): float
+    {
+        return $this->weight * 200; // 200 за кг
+    }
+
+    public function getWarrantyPeriod(): int
+    {
+        return 24;
+    }
+
+    public function getFinalPrice(): float
+    {
+        return $this->price;
+    }
+}
+
+//  Отчёт 
+$cart = [
+    new DigitalProduct('Курс по PHP', 2000),
+    new PhysicalProduct('Книга «Чистый код»', 800),
+    new ElectronicsProduct('Ноутбук', 50000, 3),
+];
+
+foreach ($cart as $item) {
+    echo 'Название: ' . $item->getTitle() . PHP_EOL;
+    echo 'Финальная стоимость: ' . $item->getFinalPrice() . ' руб.' . PHP_EOL;
+
+    if ($item instanceof DeliverableInterface) {
+        echo 'Доставка: ' . $item->calculateDeliveryCost() . ' руб.' . PHP_EOL;
+    } else {
+        echo 'Доставка: Доставка не требуется' . PHP_EOL;
+    }
+
+    if ($item instanceof WarrantyInterface) {
+        echo 'Гарантия: ' . $item->getWarrantyPeriod() . ' мес.' . PHP_EOL;
+    }
+
+    echo str_repeat('-', 40) . PHP_EOL;
+}
+
+
